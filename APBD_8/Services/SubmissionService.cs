@@ -62,4 +62,43 @@ public class SubmissionService
         
         return (true, string.Empty, newSubmission);
     }
+
+    public async Task<(bool IsSuccess, string ErrorMessage)> GradeSubmissionAsync(
+        int idSubmission, GradeSubmissionDTO dto)
+    {
+        var submission = await _context.Submissions
+            .Include(s => s.Assignment)
+            .FirstOrDefaultAsync(s => s.SubmissionId == idSubmission);
+
+        if (submission == null) return (false, "Didnt find submission");
+
+        if (dto.Score < 0) return (false, "Score cannot be lower than 0");
+        if (dto.Score > submission.Assignment.MaxPoints)
+        {
+            return (false, "Score cannot be higher than MaxPoints");
+        }
+
+        submission.Score = dto.Score;
+        submission.Feedback = dto.Feedback;
+        submission.Status = "Graded";
+
+        await _context.SaveChangesAsync();
+        return (true, string.Empty);
+    }
+
+    public async Task<(int StatusCode, string ErrorMessage)> DeleteSubmissionAsync(int idSubmission)
+    {
+        var submission = await _context.Submissions.FindAsync(idSubmission);
+        if (submission == null) return (404, "Not found");
+
+        if (submission.Status == "Graded")
+        {
+            return (400, "Graded submission cannot be deleted");
+        }
+
+        _context.Submissions.Remove(submission);
+        await _context.SaveChangesAsync();
+        
+        return (204, string.Empty);
+    }
 }
