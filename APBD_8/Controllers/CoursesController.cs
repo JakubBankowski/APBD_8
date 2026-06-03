@@ -35,7 +35,8 @@ public class CoursesController : ControllerBase
         
         return Ok(courses);
     }
-
+    
+    [HttpGet("{idCourse}/assignments")]
     public async Task<IActionResult> GetAssignmentsForCourse(int idCourse, [FromQuery] bool publishedOnly = true)
     {
         var courseExists = await _context.Courses.AnyAsync(c => c.CourseId == idCourse);
